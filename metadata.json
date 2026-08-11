@@ -1,0 +1,6 @@
+{
+  "name": "ICU Admin & Brand Management",
+  "description": "Sistema de gestión de marca, eventos, colores y tipografía para ICU Agencia de Eventos",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
