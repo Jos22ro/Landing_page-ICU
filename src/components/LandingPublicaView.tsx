@@ -1,15 +1,21 @@
 import React, { useState } from 'react';
 import { useBrand } from '../context/BrandContext';
+import { validateEmail, validateNotEmpty, validatePeriod, validateMinLength } from '../utils/validation';
 
 export const LandingPublicaView: React.FC = () => {
   const { colors, typography, showToast, navigate, themeMode, toggleThemeMode } = useBrand();
 
+  // SISTEMA ESTRICTO DE 5 ESCALAS TIPOGRÁFICAS (MÁXIMO 5 ESCALAS)
+  // Escala 1: Titular Principal Hero (H1 / Display)
   const h1Size = typography.headlineSize;
-  const h2Size = Math.max(1, Math.round(typography.headlineSize * 0.75));
-  const h3Size = Math.max(1, Math.round(typography.headlineSize * 0.58));
-  const h4Size = Math.max(1, Math.round(typography.headlineSize * 0.48));
+  // Escala 2: Títulos de Sección (H2 / Section Titles)
+  const h2Size = typography.h2Size || Math.max(1, Math.round(typography.headlineSize * 0.67));
+  // Escala 3: Subtítulos, Logotipo y Títulos de Tarjetas (H3 / Lead / Logo)
   const leadSize = typography.leadSize;
+  // Escala 4: Párrafos, Inputs de Formulario y Botones de Acción (Body / Form / CTA)
   const bodySize = typography.bodySize;
+  // Escala 5: UI Auxiliar, Navegación, Badges, Etiquetas y Metadatos (Small / Micro / Labels)
+  const smallSize = typography.smallSize || Math.max(1, Math.round(typography.bodySize * 0.75));
 
   const getContrastColor = (_hexBg?: string): string => {
     return colors.bg;
@@ -19,9 +25,36 @@ export const LandingPublicaView: React.FC = () => {
     nombre: '',
     email: '',
     tipoEvento: 'Gala Benéfica',
-    fecha: '',
+    fechaDesde: '',
+    fechaHasta: '',
     mensaje: '',
   });
+
+  const [formTouched, setFormTouched] = useState({
+    nombre: false,
+    email: false,
+    tipoEvento: false,
+    fechaDesde: false,
+    fechaHasta: false,
+    mensaje: false,
+  });
+
+  // Validaciones estrictas
+  const nombreError = validateNotEmpty(formData.nombre, 'El nombre').error;
+  const emailError = validateEmail(formData.email).error;
+  const fechaDesdeError = validateNotEmpty(formData.fechaDesde, "La fecha 'Desde'").error;
+  const fechaHastaError = validateNotEmpty(formData.fechaHasta, "La fecha 'Hasta'").error;
+  const periodError = validatePeriod(formData.fechaDesde, formData.fechaHasta, {
+    allowFuture: true,
+    maxSpanYears: 100,
+  }).error;
+  const mensajeEmptyError = validateNotEmpty(formData.mensaje, 'Los detalles de la propuesta').error;
+  const mensajeLengthError = validateMinLength(formData.mensaje, 10, 'Los detalles de la propuesta').error;
+  const mensajeError = mensajeEmptyError || mensajeLengthError;
+
+  const hasFormErrors = Boolean(
+    nombreError || emailError || fechaDesdeError || fechaHastaError || periodError || mensajeError
+  );
 
   const [selectedGalleryTab, setSelectedGalleryTab] = useState('todos');
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
@@ -73,10 +106,37 @@ export const LandingPublicaView: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.nombre && formData.email) {
-      showToast(`¡Gracias ${formData.nombre}! Tu propuesta ha sido enviada a ICU.`);
-      setFormData({ nombre: '', email: '', tipoEvento: 'Gala Benéfica', fecha: '', mensaje: '' });
+    setFormTouched({
+      nombre: true,
+      email: true,
+      tipoEvento: true,
+      fechaDesde: true,
+      fechaHasta: true,
+      mensaje: true,
+    });
+
+    if (hasFormErrors) {
+      showToast('Por favor corrige los errores: ningún campo puede estar vacío, el correo debe tener @ y la fecha desde no puede ser mayor que hasta.');
+      return;
     }
+
+    showToast(`¡Gracias ${formData.nombre}! Tu propuesta ha sido enviada a ICU.`);
+    setFormData({
+      nombre: '',
+      email: '',
+      tipoEvento: 'Gala Benéfica',
+      fechaDesde: '',
+      fechaHasta: '',
+      mensaje: '',
+    });
+    setFormTouched({
+      nombre: false,
+      email: false,
+      tipoEvento: false,
+      fechaDesde: false,
+      fechaHasta: false,
+      mensaje: false,
+    });
   };
 
   const filteredGallery =
@@ -108,24 +168,24 @@ export const LandingPublicaView: React.FC = () => {
               style={{
                 color: colors.accent,
                 fontFamily: `"${typography.fontFamily}", serif, sans-serif`,
-                fontSize: `${Math.max(1, Math.round(h1Size * 0.4))}px`,
+                fontSize: `${leadSize}px`,
               }}
             >
               ICU
             </span>
             <span
-              className="uppercase tracking-widest px-2.5 py-0.5 rounded-full border opacity-80"
+              className="uppercase tracking-widest px-2.5 py-0.5 rounded-full border opacity-80 font-sans font-semibold"
               style={{
                 borderColor: colors.neutral,
                 color: colors.textMain,
-                fontSize: `${Math.max(1, Math.round(bodySize * 0.75))}px`,
+                fontSize: `${smallSize}px`,
               }}
             >
               Agencia de Eventos
             </span>
           </div>
 
-          <div className="hidden md:flex items-center gap-8 font-sans font-medium" style={{ color: colors.textMain, fontSize: `${Math.max(1, Math.round(bodySize * 0.9))}px` }}>
+          <div className="hidden md:flex items-center gap-8 font-sans font-medium" style={{ color: colors.textMain, fontSize: `${smallSize}px` }}>
             <a href="#inicio" className="hover:opacity-75 transition-opacity">
               Inicio
             </a>
@@ -149,14 +209,23 @@ export const LandingPublicaView: React.FC = () => {
                 backgroundColor: colors.surface,
                 borderColor: colors.neutral,
                 color: colors.textMain,
-                fontSize: `${Math.max(1, Math.round(bodySize * 0.85))}px`,
+                fontSize: `${smallSize}px`,
               }}
               title={themeMode === 'dark' ? 'Cambiar a Modo Claro' : 'Cambiar a Modo Oscuro'}
             >
-              <span className="material-symbols-outlined text-lg" style={{ color: colors.accent }}>
+              <span
+                className="material-symbols-outlined transition-all"
+                style={{
+                  color: colors.accent,
+                  fontSize: `${Math.max(14, Math.round(smallSize * 1.35))}px`,
+                }}
+              >
                 {themeMode === 'dark' ? 'light_mode' : 'dark_mode'}
               </span>
-              <span className="hidden sm:inline font-sans font-bold text-xs uppercase tracking-wider">
+              <span
+                className="hidden sm:inline font-sans font-bold uppercase tracking-wider"
+                style={{ fontSize: `${smallSize}px` }}
+              >
                 {themeMode === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}
               </span>
             </button>
@@ -166,7 +235,7 @@ export const LandingPublicaView: React.FC = () => {
               style={{
                 backgroundColor: colors.accent,
                 color: getContrastColor(colors.accent),
-                fontSize: `${Math.max(1, Math.round(bodySize * 0.85))}px`,
+                fontSize: `${smallSize}px`,
               }}
             >
               Solicitar Cotización
@@ -183,7 +252,7 @@ export const LandingPublicaView: React.FC = () => {
             backgroundColor: colors.surface,
             borderColor: colors.neutral,
             color: colors.textMain,
-            fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px`,
+            fontSize: `${smallSize}px`,
           }}
         >
           Experiencias de Alto Impacto
@@ -215,7 +284,7 @@ export const LandingPublicaView: React.FC = () => {
             }}
           >
             <span>Planifica tu Evento</span>
-            <span className="material-symbols-outlined" style={{ fontSize: `${Math.max(1, Math.round(bodySize * 1.1))}px` }}>arrow_forward</span>
+            <span className="material-symbols-outlined" style={{ fontSize: `${bodySize}px` }}>arrow_forward</span>
           </a>
           <a
             href="#galeria"
@@ -249,10 +318,10 @@ export const LandingPublicaView: React.FC = () => {
                 borderColor: colors.neutral,
               }}
             >
-              <span className="material-symbols-outlined" style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(h2Size * 1.1))}px` }}>
+              <span className="material-symbols-outlined" style={{ color: colors.accent, fontSize: `${h2Size}px` }}>
                 palette
               </span>
-              <h3 className="font-bold" style={{ fontSize: `${h3Size}px`, color: colors.textMain }}>
+              <h3 className="font-bold font-serif" style={{ fontSize: `${leadSize}px`, color: colors.textMain }}>
                 Dirección de Arte Cromática
               </h3>
               <p className="opacity-80 leading-relaxed font-sans" style={{ fontSize: `${bodySize}px`, color: colors.textMain }}>
@@ -267,10 +336,10 @@ export const LandingPublicaView: React.FC = () => {
                 borderColor: colors.neutral,
               }}
             >
-              <span className="material-symbols-outlined" style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(h2Size * 1.1))}px` }}>
+              <span className="material-symbols-outlined" style={{ color: colors.accent, fontSize: `${h2Size}px` }}>
                 architecture
               </span>
-              <h3 className="font-bold" style={{ fontSize: `${h3Size}px`, color: colors.textMain }}>
+              <h3 className="font-bold font-serif" style={{ fontSize: `${leadSize}px`, color: colors.textMain }}>
                 Producción Meticulosa
               </h3>
               <p className="opacity-80 leading-relaxed font-sans" style={{ fontSize: `${bodySize}px`, color: colors.textMain }}>
@@ -285,10 +354,10 @@ export const LandingPublicaView: React.FC = () => {
                 borderColor: colors.neutral,
               }}
             >
-              <span className="material-symbols-outlined" style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(h2Size * 1.1))}px` }}>
+              <span className="material-symbols-outlined" style={{ color: colors.accent, fontSize: `${h2Size}px` }}>
                 verified
               </span>
-              <h3 className="font-bold" style={{ fontSize: `${h3Size}px`, color: colors.textMain }}>
+              <h3 className="font-bold font-serif" style={{ fontSize: `${leadSize}px`, color: colors.textMain }}>
                 Experiencias Exclusivas
               </h3>
               <p className="opacity-80 leading-relaxed font-sans" style={{ fontSize: `${bodySize}px`, color: colors.textMain }}>
@@ -330,11 +399,11 @@ export const LandingPublicaView: React.FC = () => {
               <div className="space-y-2">
                 <span
                   className="uppercase font-sans tracking-widest font-semibold block"
-                  style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}
+                  style={{ color: colors.accent, fontSize: `${smallSize}px` }}
                 >
                   01 Coordinación
                 </span>
-                <h3 className="font-bold font-serif" style={{ fontSize: `${h3Size}px`, color: colors.textMain }}>
+                <h3 className="font-bold font-serif" style={{ fontSize: `${leadSize}px`, color: colors.textMain }}>
                   El Día del Evento
                 </h3>
                 <p className="font-sans opacity-80 leading-relaxed pt-1" style={{ fontSize: `${bodySize}px`, color: colors.textMain }}>
@@ -345,10 +414,10 @@ export const LandingPublicaView: React.FC = () => {
                 <a
                   href="#contacto"
                   className="inline-flex items-center gap-1.5 font-bold font-sans transition-all hover:gap-2"
-                  style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(bodySize * 0.9))}px` }}
+                  style={{ color: colors.accent, fontSize: `${smallSize}px` }}
                 >
                   <span>Saber más</span>
-                  <span className="material-symbols-outlined" style={{ fontSize: `${Math.max(1, Math.round(bodySize * 1.05))}px` }}>arrow_forward</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: `${smallSize}px` }}>arrow_forward</span>
                 </a>
               </div>
             </div>
@@ -373,11 +442,11 @@ export const LandingPublicaView: React.FC = () => {
               <div className="space-y-2">
                 <span
                   className="uppercase font-sans tracking-widest font-semibold block"
-                  style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}
+                  style={{ color: colors.accent, fontSize: `${smallSize}px` }}
                 >
                   02 Planificación
                 </span>
-                <h3 className="font-bold font-serif" style={{ fontSize: `${h3Size}px`, color: colors.textMain }}>
+                <h3 className="font-bold font-serif" style={{ fontSize: `${leadSize}px`, color: colors.textMain }}>
                   Diseño Integral
                 </h3>
                 <p className="font-sans opacity-80 leading-relaxed pt-1" style={{ fontSize: `${bodySize}px`, color: colors.textMain }}>
@@ -388,10 +457,10 @@ export const LandingPublicaView: React.FC = () => {
                 <a
                   href="#contacto"
                   className="inline-flex items-center gap-1.5 font-bold font-sans transition-all hover:gap-2"
-                  style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(bodySize * 0.9))}px` }}
+                  style={{ color: colors.accent, fontSize: `${smallSize}px` }}
                 >
                   <span>Saber más</span>
-                  <span className="material-symbols-outlined" style={{ fontSize: `${Math.max(1, Math.round(bodySize * 1.05))}px` }}>arrow_forward</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: `${smallSize}px` }}>arrow_forward</span>
                 </a>
               </div>
             </div>
@@ -416,11 +485,11 @@ export const LandingPublicaView: React.FC = () => {
               <div className="space-y-2">
                 <span
                   className="uppercase font-sans tracking-widest font-semibold block"
-                  style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}
+                  style={{ color: colors.accent, fontSize: `${smallSize}px` }}
                 >
                   03 Diseño
                 </span>
-                <h3 className="font-bold font-serif" style={{ fontSize: `${h3Size}px`, color: colors.textMain }}>
+                <h3 className="font-bold font-serif" style={{ fontSize: `${leadSize}px`, color: colors.textMain }}>
                   Ambientación Visual
                 </h3>
                 <p className="font-sans opacity-80 leading-relaxed pt-1" style={{ fontSize: `${bodySize}px`, color: colors.textMain }}>
@@ -431,10 +500,10 @@ export const LandingPublicaView: React.FC = () => {
                 <a
                   href="#contacto"
                   className="inline-flex items-center gap-1.5 font-bold font-sans transition-all hover:gap-2"
-                  style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(bodySize * 0.9))}px` }}
+                  style={{ color: colors.accent, fontSize: `${smallSize}px` }}
                 >
                   <span>Saber más</span>
-                  <span className="material-symbols-outlined" style={{ fontSize: `${Math.max(1, Math.round(bodySize * 1.05))}px` }}>arrow_forward</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: `${smallSize}px` }}>arrow_forward</span>
                 </a>
               </div>
             </div>
@@ -455,12 +524,12 @@ export const LandingPublicaView: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
               <span
-                className="font-sans uppercase tracking-widest opacity-75 block"
-                style={{ color: colors.textMain, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}
+                className="font-sans uppercase tracking-widest opacity-75 block font-semibold"
+                style={{ color: colors.accent, fontSize: `${smallSize}px` }}
               >
                 Portfolio de Eventos
               </span>
-              <h2 className="font-bold mt-1" style={{ fontSize: `${h2Size}px`, color: colors.textMain }}>
+              <h2 className="font-bold mt-1 font-serif" style={{ fontSize: `${h2Size}px`, color: colors.textMain }}>
                 Momentos ICU
               </h2>
             </div>
@@ -471,7 +540,7 @@ export const LandingPublicaView: React.FC = () => {
               style={{
                 backgroundColor: colors.bg,
                 borderColor: colors.neutral,
-                fontSize: `${Math.max(1, Math.round(bodySize * 0.85))}px`,
+                fontSize: `${smallSize}px`,
               }}
             >
               {['todos', 'galas', 'lanzamientos', 'corporativo'].map((tab) => {
@@ -520,13 +589,13 @@ export const LandingPublicaView: React.FC = () => {
                     style={{
                       backgroundColor: colors.accent,
                       color: colors.bg,
-                      fontSize: `${Math.max(1, Math.round(bodySize * 0.7))}px`,
+                      fontSize: `${smallSize}px`,
                     }}
                   >
                     {img.category}
                   </span>
-                  <h4 className="font-bold font-serif block" style={{ fontSize: `${h4Size}px`, color: colors.textMain }}>{img.title}</h4>
-                  <p className="font-sans" style={{ color: colors.textMain, opacity: 0.85, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}>{img.location}</p>
+                  <h3 className="font-bold font-serif block" style={{ fontSize: `${leadSize}px`, color: colors.textMain }}>{img.title}</h3>
+                  <p className="font-sans opacity-85" style={{ color: colors.textMain, fontSize: `${smallSize}px` }}>{img.location}</p>
                 </div>
               </div>
             ))}
@@ -562,7 +631,7 @@ export const LandingPublicaView: React.FC = () => {
           }}
         >
           <div className="text-center space-y-3">
-            <span className="font-bold uppercase tracking-widest block" style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(bodySize * 0.85))}px` }}>
+            <span className="font-bold uppercase tracking-widest block" style={{ color: colors.accent, fontSize: `${smallSize}px` }}>
               Comienza la Conversación
             </span>
             <h2 className="font-bold font-serif" style={{ fontSize: `${h2Size}px`, color: colors.textMain }}>
@@ -576,19 +645,24 @@ export const LandingPublicaView: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
-                <label className="block font-bold uppercase tracking-wider mb-2" style={{ color: colors.textMain, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}>
-                  Nombre Completo
+                <label className="block font-bold uppercase tracking-wider mb-2 flex items-center justify-between" style={{ color: colors.textMain, fontSize: `${smallSize}px` }}>
+                  <span>Nombre Completo *</span>
+                  {formTouched.nombre && nombreError && (
+                    <span className="text-rose-600 font-bold normal-case text-xs">{nombreError}</span>
+                  )}
                 </label>
                 <input
                   type="text"
-                  required
                   placeholder="Tu nombre o empresa"
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                  className="w-full rounded-lg p-3 border focus:outline-none"
+                  onBlur={() => setFormTouched((p) => ({ ...p, nombre: true }))}
+                  className={`w-full rounded-lg p-3 border focus:outline-none transition-all ${
+                    formTouched.nombre && nombreError ? 'border-rose-500 ring-1 ring-rose-500' : ''
+                  }`}
                   style={{
                     backgroundColor: colors.bg,
-                    borderColor: colors.neutral,
+                    borderColor: formTouched.nombre && nombreError ? '#e11d48' : colors.neutral,
                     color: colors.textMain,
                     fontSize: `${bodySize}px`,
                   }}
@@ -596,19 +670,24 @@ export const LandingPublicaView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-bold uppercase tracking-wider mb-2" style={{ color: colors.textMain, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}>
-                  Correo Electrónico
+                <label className="block font-bold uppercase tracking-wider mb-2 flex items-center justify-between" style={{ color: colors.textMain, fontSize: `${smallSize}px` }}>
+                  <span>Correo Electrónico (con @) *</span>
+                  {formTouched.email && emailError && (
+                    <span className="text-rose-600 font-bold normal-case text-xs">{emailError}</span>
+                  )}
                 </label>
                 <input
                   type="email"
-                  required
                   placeholder="contacto@empresa.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full rounded-lg p-3 border focus:outline-none"
+                  onBlur={() => setFormTouched((p) => ({ ...p, email: true }))}
+                  className={`w-full rounded-lg p-3 border focus:outline-none transition-all ${
+                    formTouched.email && emailError ? 'border-rose-500 ring-1 ring-rose-500' : ''
+                  }`}
                   style={{
                     backgroundColor: colors.bg,
-                    borderColor: colors.neutral,
+                    borderColor: formTouched.email && emailError ? '#e11d48' : colors.neutral,
                     color: colors.textMain,
                     fontSize: `${bodySize}px`,
                   }}
@@ -616,10 +695,10 @@ export const LandingPublicaView: React.FC = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div>
-                <label className="block font-bold uppercase tracking-wider mb-2" style={{ color: colors.textMain, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}>
-                  Tipo de Evento
+                <label className="block font-bold uppercase tracking-wider mb-2" style={{ color: colors.textMain, fontSize: `${smallSize}px` }}>
+                  Tipo de Evento *
                 </label>
                 <select
                   value={formData.tipoEvento}
@@ -640,17 +719,57 @@ export const LandingPublicaView: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-bold uppercase tracking-wider mb-2" style={{ color: colors.textMain, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}>
-                  Fecha Estimada
+                <label className="block font-bold uppercase tracking-wider mb-2 flex items-center justify-between" style={{ color: colors.textMain, fontSize: `${smallSize}px` }}>
+                  <span>Fecha Desde *</span>
+                  {formTouched.fechaDesde && fechaDesdeError && (
+                    <span className="text-rose-600 font-bold normal-case text-xs">Requerido</span>
+                  )}
                 </label>
                 <input
                   type="date"
-                  value={formData.fecha}
-                  onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-                  className="w-full rounded-lg p-3 border focus:outline-none"
+                  value={formData.fechaDesde}
+                  onChange={(e) => setFormData({ ...formData, fechaDesde: e.target.value })}
+                  onBlur={() => setFormTouched((p) => ({ ...p, fechaDesde: true }))}
+                  className={`w-full rounded-lg p-3 border focus:outline-none transition-all ${
+                    (formTouched.fechaDesde && fechaDesdeError) || ((formTouched.fechaDesde || formTouched.fechaHasta) && periodError)
+                      ? 'border-rose-500 ring-1 ring-rose-500'
+                      : ''
+                  }`}
                   style={{
                     backgroundColor: colors.bg,
-                    borderColor: colors.neutral,
+                    borderColor:
+                      (formTouched.fechaDesde && fechaDesdeError) || ((formTouched.fechaDesde || formTouched.fechaHasta) && periodError)
+                        ? '#e11d48'
+                        : colors.neutral,
+                    color: colors.textMain,
+                    fontSize: `${bodySize}px`,
+                  }}
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold uppercase tracking-wider mb-2 flex items-center justify-between" style={{ color: colors.textMain, fontSize: `${smallSize}px` }}>
+                  <span>Fecha Hasta *</span>
+                  {formTouched.fechaHasta && fechaHastaError && (
+                    <span className="text-rose-600 font-bold normal-case text-xs">Requerido</span>
+                  )}
+                </label>
+                <input
+                  type="date"
+                  value={formData.fechaHasta}
+                  onChange={(e) => setFormData({ ...formData, fechaHasta: e.target.value })}
+                  onBlur={() => setFormTouched((p) => ({ ...p, fechaHasta: true }))}
+                  className={`w-full rounded-lg p-3 border focus:outline-none transition-all ${
+                    (formTouched.fechaHasta && fechaHastaError) || ((formTouched.fechaDesde || formTouched.fechaHasta) && periodError)
+                      ? 'border-rose-500 ring-1 ring-rose-500'
+                      : ''
+                  }`}
+                  style={{
+                    backgroundColor: colors.bg,
+                    borderColor:
+                      (formTouched.fechaHasta && fechaHastaError) || ((formTouched.fechaDesde || formTouched.fechaHasta) && periodError)
+                        ? '#e11d48'
+                        : colors.neutral,
                     color: colors.textMain,
                     fontSize: `${bodySize}px`,
                   }}
@@ -658,24 +777,48 @@ export const LandingPublicaView: React.FC = () => {
               </div>
             </div>
 
+            {/* Advertencia de período si 'desde' es mayor que 'hasta' */}
+            {(formTouched.fechaDesde || formTouched.fechaHasta) && periodError && !fechaDesdeError && !fechaHastaError && (
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-300 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">warning</span>
+                <span>{periodError}</span>
+              </div>
+            )}
+
             <div>
-              <label className="block font-bold uppercase tracking-wider mb-2" style={{ color: colors.textMain, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}>
-                Detalles de la Propuesta
+              <label className="block font-bold uppercase tracking-wider mb-2 flex items-center justify-between" style={{ color: colors.textMain, fontSize: `${smallSize}px` }}>
+                <span>Detalles de la Propuesta *</span>
+                {formTouched.mensaje && mensajeError && (
+                  <span className="text-rose-600 font-bold normal-case text-xs">{mensajeError}</span>
+                )}
               </label>
               <textarea
                 rows={4}
                 placeholder="Indica la estimación de asistentes, locación preferida u objetivos del evento..."
                 value={formData.mensaje}
                 onChange={(e) => setFormData({ ...formData, mensaje: e.target.value })}
-                className="w-full rounded-lg p-3 border focus:outline-none"
+                onBlur={() => setFormTouched((p) => ({ ...p, mensaje: true }))}
+                className={`w-full rounded-lg p-3 border focus:outline-none transition-all ${
+                  formTouched.mensaje && mensajeError ? 'border-rose-500 ring-1 ring-rose-500' : ''
+                }`}
                 style={{
                   backgroundColor: colors.bg,
-                  borderColor: colors.neutral,
+                  borderColor: formTouched.mensaje && mensajeError ? '#e11d48' : colors.neutral,
                   color: colors.textMain,
                   fontSize: `${bodySize}px`,
                 }}
               />
             </div>
+
+            {hasFormErrors && Object.values(formTouched).some(Boolean) && (
+              <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-300 text-rose-800 text-xs flex items-center gap-2.5">
+                <span className="material-symbols-outlined text-base text-rose-600">error</span>
+                <div>
+                  <p className="font-bold">Por favor revisa los campos señalados:</p>
+                  <p className="text-[11px] opacity-90">No puede haber campos vacíos, el correo debe contener '@' y la fecha desde no puede ser mayor que hasta.</p>
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -704,16 +847,16 @@ export const LandingPublicaView: React.FC = () => {
           <div className="flex items-center gap-3">
             <span
               className="font-bold font-serif"
-              style={{ color: colors.accent, fontSize: `${Math.max(1, Math.round(h1Size * 0.4))}px` }}
+              style={{ color: colors.accent, fontSize: `${leadSize}px` }}
             >
               ICU
             </span>
-            <span className="opacity-70" style={{ color: colors.textMain, fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}>
+            <span className="opacity-70" style={{ color: colors.textMain, fontSize: `${smallSize}px` }}>
               © {new Date().getFullYear()} ICU Agencia de Eventos. Todos los derechos reservados.
             </span>
           </div>
 
-          <div className="flex items-center gap-6" style={{ color: colors.textMain, fontSize: `${Math.max(1, Math.round(bodySize * 0.9))}px` }}>
+          <div className="flex items-center gap-6" style={{ color: colors.textMain, fontSize: `${smallSize}px` }}>
             <a href="#inicio" className="hover:opacity-75 transition-opacity">
               Inicio
             </a>
@@ -727,7 +870,7 @@ export const LandingPublicaView: React.FC = () => {
                 navigate('/admin');
               }}
               className="hover:opacity-100 font-semibold opacity-75 transition-opacity"
-              style={{ fontSize: `${Math.max(1, Math.round(bodySize * 0.8))}px` }}
+              style={{ fontSize: `${smallSize}px` }}
             >
               Panel Admin (/admin)
             </a>

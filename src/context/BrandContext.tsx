@@ -3,11 +3,18 @@ import {
   NavTab,
   ColorTokens,
   TypographyConfig,
+  TypographyScales,
   EventItem,
   ActivityItem,
   PaletteItem,
   FontItem,
   UserProfile,
+  CurriculumData,
+  WorkExperienceItem,
+  EducationItem,
+  LanguageItem,
+  SoftwareCompetencyItem,
+  SoftSkillItem,
 } from '../types';
 import {
   defaultColors,
@@ -17,6 +24,7 @@ import {
   initialPalettes,
   initialFonts,
   userProfile,
+  defaultCurriculumData,
 } from '../data/mockData';
 
 interface BrandContextType {
@@ -54,7 +62,7 @@ interface BrandContextType {
   fonts: FontItem[];
   useFont: (id: string) => void;
   deleteFont: (id: string) => void;
-  uploadFont: (fontName: string, dataUrl?: string) => void;
+  uploadFont: (fontName: string, dataUrl?: string, customScales?: TypographyScales) => void;
   isLoggedIn: boolean;
   login: () => void;
   logout: () => void;
@@ -65,6 +73,27 @@ interface BrandContextType {
   setIsAjustesOpen: (open: boolean) => void;
   toast: string | null;
   showToast: (msg: string) => void;
+  // Curriculum state & actions
+  curriculumData: CurriculumData;
+  setCurriculumData: React.Dispatch<React.SetStateAction<CurriculumData>>;
+  updateCurriculumField: <K extends keyof CurriculumData>(field: K, value: CurriculumData[K]) => void;
+  saveCurriculumData: () => void;
+  resetCurriculumData: () => void;
+  addWorkExperience: (exp?: Partial<WorkExperienceItem>) => void;
+  updateWorkExperience: (id: string, updated: Partial<WorkExperienceItem>) => void;
+  deleteWorkExperience: (id: string) => void;
+  addEducation: (edu?: Partial<EducationItem>) => void;
+  updateEducation: (id: string, updated: Partial<EducationItem>) => void;
+  deleteEducation: (id: string) => void;
+  addLanguage: (lang?: Partial<LanguageItem>) => void;
+  updateLanguage: (id: string, updated: Partial<LanguageItem>) => void;
+  deleteLanguage: (id: string) => void;
+  addCompetency: (comp?: Partial<SoftwareCompetencyItem>) => void;
+  updateCompetency: (id: string, updated: Partial<SoftwareCompetencyItem>) => void;
+  deleteCompetency: (id: string) => void;
+  addSkill: (skill?: Partial<SoftSkillItem>) => void;
+  updateSkill: (id: string, updated: Partial<SoftSkillItem>) => void;
+  deleteSkill: (id: string) => void;
 }
 
 const BrandContext = createContext<BrandContextType | undefined>(undefined);
@@ -79,7 +108,22 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [typography, setTypography] = useState<TypographyConfig>(() => {
     const saved = localStorage.getItem('icu_typography');
-    return saved ? JSON.parse(saved) : defaultTypography;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          fontFamily: parsed.fontFamily || defaultTypography.fontFamily,
+          headlineSize: parsed.headlineSize || defaultTypography.headlineSize,
+          h2Size: parsed.h2Size || Math.max(1, Math.round((parsed.headlineSize || 56) * 0.67)),
+          leadSize: parsed.leadSize || defaultTypography.leadSize,
+          bodySize: parsed.bodySize || defaultTypography.bodySize,
+          smallSize: parsed.smallSize || Math.max(1, Math.round((parsed.bodySize || 16) * 0.75)),
+        };
+      } catch (e) {
+        console.warn('Failed parsing saved typography', e);
+      }
+    }
+    return defaultTypography;
   });
   const [savedTypographyState, setSavedTypographyState] = useState<TypographyConfig>(typography);
 
@@ -96,6 +140,11 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [themeMode, setThemeModeState] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('icu_theme_mode');
     return saved === 'dark' || saved === 'light' ? saved : 'light';
+  });
+
+  const [curriculumData, setCurriculumData] = useState<CurriculumData>(() => {
+    const saved = localStorage.getItem('icu_curriculum_data');
+    return saved ? JSON.parse(saved) : defaultCurriculumData;
   });
 
   const [palettes, setPalettes] = useState<PaletteItem[]>(() => {
@@ -131,7 +180,30 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const [fonts, setFonts] = useState<FontItem[]>(() => {
     const saved = localStorage.getItem('icu_fonts');
-    return saved ? JSON.parse(saved) : initialFonts;
+    if (saved) {
+      try {
+        const loadedFonts: FontItem[] = JSON.parse(saved);
+        return loadedFonts.map((f) => {
+          if (!f.scales) {
+            const fallbackMatching = initialFonts.find((init) => init.name.toLowerCase() === f.name.toLowerCase());
+            return {
+              ...f,
+              scales: fallbackMatching?.scales || {
+                scale1: 56,
+                scale2: 36,
+                scale3: 22,
+                scale4: 16,
+                scale5: 12,
+              },
+            };
+          }
+          return f;
+        });
+      } catch (e) {
+        console.warn('Failed parsing saved fonts', e);
+      }
+    }
+    return initialFonts;
   });
 
   const [currentPath, setCurrentPath] = useState<string>(() => {
@@ -197,26 +269,29 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         document.head.appendChild(styleEl);
       }
 
-      const h1Size = typography.headlineSize;
-      const h2Size = Math.max(1, Math.round(h1Size * 0.78));
-      const h3Size = Math.max(1, Math.round(h1Size * 0.62));
-      const h4Size = Math.max(1, Math.round(h1Size * 0.5));
-      const h5Size = Math.max(1, Math.round(h1Size * 0.4));
-      const h6Size = Math.max(1, Math.round(h1Size * 0.33));
-      const leadSize = typography.leadSize;
-      const bodySize = typography.bodySize;
+      const scale1 = typography.headlineSize;
+      const scale2 = typography.h2Size;
+      const scale3 = typography.leadSize;
+      const scale4 = typography.bodySize;
+      const scale5 = typography.smallSize;
 
       styleEl.textContent = `
         :root {
           --brand-font-family: "${typography.fontFamily}", serif, sans-serif;
-          --font-size-h1: ${h1Size}px;
-          --font-size-h2: ${h2Size}px;
-          --font-size-h3: ${h3Size}px;
-          --font-size-h4: ${h4Size}px;
-          --font-size-h5: ${h5Size}px;
-          --font-size-h6: ${h6Size}px;
-          --font-size-lead: ${leadSize}px;
-          --font-size-body: ${bodySize}px;
+          --font-size-scale-1: ${scale1}px;
+          --font-size-scale-2: ${scale2}px;
+          --font-size-scale-3: ${scale3}px;
+          --font-size-scale-4: ${scale4}px;
+          --font-size-scale-5: ${scale5}px;
+          --font-size-h1: ${scale1}px;
+          --font-size-h2: ${scale2}px;
+          --font-size-h3: ${scale3}px;
+          --font-size-h4: ${scale3}px;
+          --font-size-h5: ${scale4}px;
+          --font-size-h6: ${scale5}px;
+          --font-size-lead: ${scale3}px;
+          --font-size-body: ${scale4}px;
+          --font-size-small: ${scale5}px;
         }
 
         .landing-page-scope h1,
@@ -441,8 +516,28 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const saveTypography = () => {
     setSavedTypographyState(typography);
-    showToast('Escala tipográfica guardada exitosamente');
-    addActivity('text_fields', `Escala tipográfica actualizada (${typography.headlineSize}px)`, userProfile.name);
+    const currentScales = {
+      scale1: typography.headlineSize,
+      scale2: typography.h2Size,
+      scale3: typography.leadSize,
+      scale4: typography.bodySize,
+      scale5: typography.smallSize,
+    };
+
+    setFonts((prev) =>
+      prev.map((f) =>
+        f.current || f.name.toLowerCase() === typography.fontFamily.toLowerCase()
+          ? { ...f, scales: currentScales, current: true }
+          : f
+      )
+    );
+
+    showToast(`Escalas guardadas para la fuente '${typography.fontFamily}'`);
+    addActivity(
+      'text_fields',
+      `Escalas actualizadas para '${typography.fontFamily}' (${typography.headlineSize}px, ${typography.h2Size}px, ${typography.leadSize}px, ${typography.bodySize}px, ${typography.smallSize}px)`,
+      userProfile.name
+    );
   };
 
   const addEvent = (newEventData: Omit<EventItem, 'id'>) => {
@@ -623,12 +718,23 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       if (selected.dataUrl) {
         registerFontInBrowser(selected.name, selected.dataUrl);
       }
-      setTypography((prev) => ({
-        ...prev,
+      const loadedScales = selected.scales || {
+        scale1: 56,
+        scale2: 36,
+        scale3: 22,
+        scale4: 16,
+        scale5: 12,
+      };
+      setTypography({
         fontFamily: selected.name,
-      }));
-      showToast(`Fuente '${selected.name}' activada`);
-      addActivity('text_fields', `Fuente '${selected.name}' establecida como actual`, userProfile.name);
+        headlineSize: loadedScales.scale1,
+        h2Size: loadedScales.scale2,
+        leadSize: loadedScales.scale3,
+        bodySize: loadedScales.scale4,
+        smallSize: loadedScales.scale5,
+      });
+      showToast(`Fuente '${selected.name}' activada con sus 5 escalas`);
+      addActivity('text_fields', `Fuente '${selected.name}' activada con sus escalas`, userProfile.name);
     }
   };
 
@@ -637,10 +743,18 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     showToast('Fuente eliminada');
   };
 
-  const uploadFont = (fontName: string, dataUrl?: string) => {
+  const uploadFont = (fontName: string, dataUrl?: string, customScales?: TypographyScales) => {
     if (dataUrl) {
       registerFontInBrowser(fontName, dataUrl);
     }
+
+    const initialScales: TypographyScales = customScales || {
+      scale1: 56,
+      scale2: 36,
+      scale3: 22,
+      scale4: 16,
+      scale5: 12,
+    };
 
     const newFont: FontItem = {
       id: Date.now().toString(),
@@ -649,14 +763,208 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       uploadDate: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
       current: true,
       dataUrl,
+      scales: initialScales,
     };
     setFonts((prev) => [newFont, ...prev.map((f) => ({ ...f, current: false }))]);
-    setTypography((prev) => ({
-      ...prev,
+    setTypography({
       fontFamily: fontName,
-    }));
-    showToast(`Fuente '${fontName}' cargada y activada`);
-    addActivity('text_fields', `Nueva fuente '${fontName}' cargada`, userProfile.name);
+      headlineSize: initialScales.scale1,
+      h2Size: initialScales.scale2,
+      leadSize: initialScales.scale3,
+      bodySize: initialScales.scale4,
+      smallSize: initialScales.scale5,
+    });
+    showToast(`Fuente '${fontName}' cargada con sus 5 escalas iniciales`);
+    addActivity('text_fields', `Nueva fuente '${fontName}' cargada con escalas iniciales`, userProfile.name);
+  };
+
+  // Curriculum functions
+  const updateCurriculumField = <K extends keyof CurriculumData>(field: K, value: CurriculumData[K]) => {
+    setCurriculumData((prev) => {
+      const updated = { ...prev, [field]: value };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const saveCurriculumData = () => {
+    localStorage.setItem('icu_curriculum_data', JSON.stringify(curriculumData));
+    showToast('Currículum guardado exitosamente');
+    addActivity('curriculum', `Currículum de ${curriculumData.firstName} ${curriculumData.lastName} guardado`, userProfile.name);
+  };
+
+  const resetCurriculumData = () => {
+    setCurriculumData(defaultCurriculumData);
+    localStorage.setItem('icu_curriculum_data', JSON.stringify(defaultCurriculumData));
+    showToast('Currículum restaurado a los valores predeterminados');
+  };
+
+  const addWorkExperience = (exp?: Partial<WorkExperienceItem>) => {
+    const newExp: WorkExperienceItem = {
+      id: `exp-${Date.now()}`,
+      company: exp?.company || 'Nueva Empresa',
+      period: exp?.period || '2023 - Presente',
+      description: exp?.description || 'Descripción de las responsabilidades y logros clave.',
+    };
+    setCurriculumData((prev) => {
+      const updated = { ...prev, experiences: [...prev.experiences, newExp] };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const updateWorkExperience = (id: string, updated: Partial<WorkExperienceItem>) => {
+    setCurriculumData((prev) => {
+      const updatedList = prev.experiences.map((item) => (item.id === id ? { ...item, ...updated } : item));
+      const updatedData = { ...prev, experiences: updatedList };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updatedData));
+      return updatedData;
+    });
+  };
+
+  const deleteWorkExperience = (id: string) => {
+    setCurriculumData((prev) => {
+      const updatedList = prev.experiences.filter((item) => item.id !== id);
+      const updatedData = { ...prev, experiences: updatedList };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updatedData));
+      return updatedData;
+    });
+  };
+
+  const addEducation = (edu?: Partial<EducationItem>) => {
+    const newEdu: EducationItem = {
+      id: `edu-${Date.now()}`,
+      institution: edu?.institution || 'Nueva Universidad / Institución',
+      degree: edu?.degree || 'Título o Carrera',
+      period: edu?.period || '2020 - 2024',
+    };
+    setCurriculumData((prev) => {
+      const updated = { ...prev, education: [...prev.education, newEdu] };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const updateEducation = (id: string, updated: Partial<EducationItem>) => {
+    setCurriculumData((prev) => {
+      const updatedList = prev.education.map((item) => (item.id === id ? { ...item, ...updated } : item));
+      const updatedData = { ...prev, education: updatedList };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updatedData));
+      return updatedData;
+    });
+  };
+
+  const deleteEducation = (id: string) => {
+    setCurriculumData((prev) => {
+      const updatedList = prev.education.filter((item) => item.id !== id);
+      const updatedData = { ...prev, education: updatedList };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updatedData));
+      return updatedData;
+    });
+  };
+
+  const addLanguage = (lang?: Partial<LanguageItem>) => {
+    const newLang: LanguageItem = {
+      id: `lang-${Date.now()}`,
+      name: lang?.name || 'Nuevo Idioma',
+      level: lang?.level || 'Intermedio',
+    };
+    setCurriculumData((prev) => {
+      const updated = { ...prev, languages: [...prev.languages, newLang] };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const updateLanguage = (id: string, updated: Partial<LanguageItem>) => {
+    setCurriculumData((prev) => {
+      const updatedList = prev.languages.map((item) => (item.id === id ? { ...item, ...updated } : item));
+      const updatedData = { ...prev, languages: updatedList };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updatedData));
+      return updatedData;
+    });
+  };
+
+  const deleteLanguage = (id: string) => {
+    setCurriculumData((prev) => {
+      const updatedList = prev.languages.filter((item) => item.id !== id);
+      const updatedData = { ...prev, languages: updatedList };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updatedData));
+      return updatedData;
+    });
+  };
+
+  const addCompetency = (comp?: Partial<SoftwareCompetencyItem>) => {
+    const rawPercentage = comp?.percentage ?? 75;
+    const snappedPercentage = Math.min(100, Math.max(25, Math.round(rawPercentage / 25) * 25));
+    const newComp: SoftwareCompetencyItem = {
+      id: `comp-${Date.now()}`,
+      name: comp?.name || 'Software / Herramienta',
+      percentage: snappedPercentage,
+    };
+    setCurriculumData((prev) => {
+      const updated = { ...prev, competencies: [...prev.competencies, newComp] };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const updateCompetency = (id: string, updated: Partial<SoftwareCompetencyItem>) => {
+    setCurriculumData((prev) => {
+      const updatedList = prev.competencies.map((item) => {
+        if (item.id === id) {
+          const finalUpdated = { ...item, ...updated };
+          if (typeof finalUpdated.percentage === 'number') {
+            finalUpdated.percentage = Math.min(100, Math.max(25, Math.round(finalUpdated.percentage / 25) * 25));
+          }
+          return finalUpdated;
+        }
+        return item;
+      });
+      const updatedData = { ...prev, competencies: updatedList };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updatedData));
+      return updatedData;
+    });
+  };
+
+  const deleteCompetency = (id: string) => {
+    setCurriculumData((prev) => {
+      const updatedList = prev.competencies.filter((item) => item.id !== id);
+      const updatedData = { ...prev, competencies: updatedList };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updatedData));
+      return updatedData;
+    });
+  };
+
+  const addSkill = (skill?: Partial<SoftSkillItem>) => {
+    const newSkill: SoftSkillItem = {
+      id: `skill-${Date.now()}`,
+      name: skill?.name || 'Nueva Habilidad',
+      rating: skill?.rating ?? 4,
+    };
+    setCurriculumData((prev) => {
+      const updated = { ...prev, skills: [...prev.skills, newSkill] };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const updateSkill = (id: string, updated: Partial<SoftSkillItem>) => {
+    setCurriculumData((prev) => {
+      const updatedList = prev.skills.map((item) => (item.id === id ? { ...item, ...updated } : item));
+      const updatedData = { ...prev, skills: updatedList };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updatedData));
+      return updatedData;
+    });
+  };
+
+  const deleteSkill = (id: string) => {
+    setCurriculumData((prev) => {
+      const updatedList = prev.skills.filter((item) => item.id !== id);
+      const updatedData = { ...prev, skills: updatedList };
+      localStorage.setItem('icu_curriculum_data', JSON.stringify(updatedData));
+      return updatedData;
+    });
   };
 
   const login = () => {
@@ -722,6 +1030,26 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsAjustesOpen,
         toast,
         showToast,
+        curriculumData,
+        setCurriculumData,
+        updateCurriculumField,
+        saveCurriculumData,
+        resetCurriculumData,
+        addWorkExperience,
+        updateWorkExperience,
+        deleteWorkExperience,
+        addEducation,
+        updateEducation,
+        deleteEducation,
+        addLanguage,
+        updateLanguage,
+        deleteLanguage,
+        addCompetency,
+        updateCompetency,
+        deleteCompetency,
+        addSkill,
+        updateSkill,
+        deleteSkill,
       }}
     >
       {children}

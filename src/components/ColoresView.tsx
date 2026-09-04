@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useBrand } from '../context/BrandContext';
 import { ColorTokens } from '../types';
+import { validateNotEmpty, validateHexColor } from '../utils/validation';
 
 export const ColoresView: React.FC = () => {
   const {
@@ -12,10 +13,12 @@ export const ColoresView: React.FC = () => {
     editingPaletteId,
     editingPalette,
     cancelEditingPalette,
+    showToast,
   } = useBrand();
 
   const [paletteName, setPaletteName] = useState('Paleta Principal ICU');
   const [paletteMode, setPaletteMode] = useState<'light' | 'dark'>('light');
+  const [hasAttemptedSave, setHasAttemptedSave] = useState(false);
 
   useEffect(() => {
     if (editingPalette) {
@@ -31,6 +34,19 @@ export const ColoresView: React.FC = () => {
     { key: 'accent', label: 'Acento', varName: 'var(--accent)' },
     { key: 'neutral', label: 'Neutro / Borde', varName: 'var(--neutral)' },
   ];
+
+  // Validaciones
+  const paletteNameVal = validateNotEmpty(paletteName, 'El nombre de la paleta');
+  const hexValidation: Record<keyof ColorTokens, { isValid: boolean; error: string | null }> = {
+    bg: validateHexColor(colors.bg),
+    surface: validateHexColor(colors.surface),
+    textMain: validateHexColor(colors.textMain),
+    accent: validateHexColor(colors.accent),
+    neutral: validateHexColor(colors.neutral),
+  };
+
+  const hasInvalidHex = Object.values(hexValidation).some((v) => !v.isValid);
+  const isValidToSave = paletteNameVal.isValid && !hasInvalidHex;
 
   const handleModeChange = (newMode: 'light' | 'dark') => {
     setPaletteMode(newMode);
@@ -54,7 +70,17 @@ export const ColoresView: React.FC = () => {
   };
 
   const handleSave = () => {
+    setHasAttemptedSave(true);
+    if (!paletteNameVal.isValid) {
+      showToast('Por favor asigna un nombre válido a la paleta antes de guardar.');
+      return;
+    }
+    if (hasInvalidHex) {
+      showToast('Corrige los códigos HEX inválidos antes de guardar.');
+      return;
+    }
     saveColors(paletteName, paletteMode);
+    showToast(`Paleta '${paletteName}' guardada con éxito.`);
   };
 
   return (
@@ -69,13 +95,29 @@ export const ColoresView: React.FC = () => {
             Configura los tokens de color globales para la agencia y especifica el nombre y modo de la paleta.
           </p>
         </div>
-        <div className="bg-white px-4 py-2 rounded-full border border-[rgba(38,33,28,0.14)] flex items-center gap-2.5 self-start md:self-auto">
-          <span className="w-2.5 h-2.5 rounded-full bg-[#2E6B4F]"></span>
-          <span className="text-xs uppercase tracking-widest text-[#665d54] font-medium">
-            5/5 COLORES CONFIGURADOS
+        <div className={`px-4 py-2 rounded-full border flex items-center gap-2.5 self-start md:self-auto ${
+          isValidToSave ? 'bg-white border-[rgba(38,33,28,0.14)]' : 'bg-rose-50 border-rose-300'
+        }`}>
+          <span className={`w-2.5 h-2.5 rounded-full ${isValidToSave ? 'bg-[#2E6B4F]' : 'bg-rose-600 animate-pulse'}`}></span>
+          <span className={`text-xs uppercase tracking-widest font-medium ${isValidToSave ? 'text-[#665d54]' : 'text-rose-700 font-bold'}`}>
+            {isValidToSave ? '5/5 COLORES VÁLIDOS' : 'CONFIGURACIÓN INCOMPLETA'}
           </span>
         </div>
       </div>
+
+      {/* Warning banner if validation issues on save attempt */}
+      {hasAttemptedSave && !isValidToSave && (
+        <div className="bg-rose-50 border border-rose-300 rounded-xl p-4 flex items-center gap-3 text-rose-800">
+          <span className="material-symbols-outlined text-2xl text-rose-600">warning</span>
+          <div className="text-xs">
+            <p className="font-bold">No se puede guardar la paleta aún:</p>
+            <ul className="list-disc list-inside mt-0.5 space-y-0.5 opacity-90">
+              {!paletteNameVal.isValid && <li>{paletteNameVal.error}</li>}
+              {hasInvalidHex && <li>Hay uno o más colores con código HEX inválido (deben ser del tipo #RRGGBB).</li>}
+            </ul>
+          </div>
+        </div>
+      )}
 
       {/* Editing Mode Banner */}
       {editingPaletteId && (
@@ -126,16 +168,28 @@ export const ColoresView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Input: Nombre de la Paleta */}
               <div className="space-y-1.5">
-                <label className="block text-xs uppercase font-sans font-bold tracking-wider text-[#665d54]">
-                  Nombre de la Paleta
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs uppercase font-sans font-bold tracking-wider text-[#665d54]">
+                    Nombre de la Paleta *
+                  </label>
+                  {!paletteNameVal.isValid && (
+                    <span className="text-[10px] text-rose-600 font-bold">Requerido</span>
+                  )}
+                </div>
                 <input
                   type="text"
                   value={paletteName}
                   onChange={(e) => setPaletteName(e.target.value)}
                   placeholder="Ej. Gala Editorial, Noche Velada..."
-                  className="w-full bg-[#fdf9f2] border border-[rgba(38,33,28,0.14)] rounded-lg px-3.5 py-2 text-sm text-[#1c1c18] font-medium focus:outline-none focus:border-[#5d172d] focus:ring-1 focus:ring-[#5d172d]"
+                  className={`w-full border rounded-lg px-3.5 py-2 text-sm text-[#1c1c18] font-medium focus:outline-none ${
+                    !paletteNameVal.isValid
+                      ? 'border-rose-400 bg-rose-50/20 focus:border-rose-600'
+                      : 'bg-[#fdf9f2] border-[rgba(38,33,28,0.14)] focus:border-[#5d172d] focus:ring-1 focus:ring-[#5d172d]'
+                  }`}
                 />
+                {!paletteNameVal.isValid && (
+                  <p className="text-[11px] text-rose-600 font-medium">{paletteNameVal.error}</p>
+                )}
               </div>
 
               {/* Input/Selector: Modo (Oscuro o Claro) */}
@@ -175,39 +229,56 @@ export const ColoresView: React.FC = () => {
 
           {/* Color Tokens List */}
           <div className="flex flex-col gap-4">
-            {colorFields.map((field) => (
-              <div
-                key={field.key}
-                className="bg-white rounded-lg shadow-1 p-5 flex flex-col sm:flex-row sm:items-center justify-between border border-transparent hover:border-[#d9c1c4] transition-colors gap-4"
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="w-12 h-12 rounded-full shadow-inner border border-[rgba(38,33,28,0.14)] shrink-0 transition-colors duration-200"
-                    style={{ backgroundColor: colors[field.key] }}
-                  />
-                  <div>
-                    <h3 className="text-base font-bold text-[#1c1c18]">{field.label}</h3>
-                    <p className="text-xs uppercase tracking-widest text-[#665d54] mt-0.5">
-                      {field.varName}
-                    </p>
+            {colorFields.map((field) => {
+              const hexVal = hexValidation[field.key];
+              return (
+                <div
+                  key={field.key}
+                  className={`bg-white rounded-lg shadow-1 p-5 flex flex-col sm:flex-row sm:items-center justify-between border transition-colors gap-4 ${
+                    !hexVal.isValid ? 'border-rose-400 bg-rose-50/10' : 'border-transparent hover:border-[#d9c1c4]'
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className="w-12 h-12 rounded-full shadow-inner border border-[rgba(38,33,28,0.14)] shrink-0 transition-colors duration-200"
+                      style={{ backgroundColor: hexVal.isValid ? colors[field.key] : '#e5e7eb' }}
+                    />
+                    <div>
+                      <h3 className="text-base font-bold text-[#1c1c18]">{field.label}</h3>
+                      <p className="text-xs uppercase tracking-widest text-[#665d54] mt-0.5">
+                        {field.varName}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex items-center gap-2.5">
+                      <input
+                        type="color"
+                        value={hexVal.isValid ? colors[field.key] : '#000000'}
+                        onChange={(e) => updateColorToken(field.key, e.target.value)}
+                        className="w-10 h-10 p-1 bg-transparent border-0 cursor-pointer rounded-md hover:bg-[#e6e2db] transition-colors"
+                      />
+                      <input
+                        type="text"
+                        value={colors[field.key]}
+                        onChange={(e) => updateColorToken(field.key, e.target.value)}
+                        placeholder="#RRGGBB"
+                        className={`w-28 text-sm font-mono text-center border rounded px-2.5 py-1.5 focus:outline-none ${
+                          !hexVal.isValid
+                            ? 'border-rose-400 focus:border-rose-600 bg-rose-50/20'
+                            : 'border-[rgba(38,33,28,0.14)] focus:border-[#5d172d] focus:ring-1 focus:ring-[#5d172d]'
+                        }`}
+                      />
+                    </div>
+                    {!hexVal.isValid && (
+                      <span className="text-[10px] text-rose-600 font-medium">
+                        {hexVal.error}
+                      </span>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <input
-                    type="color"
-                    value={colors[field.key]}
-                    onChange={(e) => updateColorToken(field.key, e.target.value)}
-                    className="w-10 h-10 p-1 bg-transparent border-0 cursor-pointer rounded-md hover:bg-[#e6e2db] transition-colors"
-                  />
-                  <input
-                    type="text"
-                    value={colors[field.key]}
-                    onChange={(e) => updateColorToken(field.key, e.target.value)}
-                    className="w-28 text-sm font-mono text-center border border-[rgba(38,33,28,0.14)] rounded px-2.5 py-1.5 focus:outline-none focus:border-[#5d172d] focus:ring-1 focus:ring-[#5d172d]"
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -317,22 +388,36 @@ export const ColoresView: React.FC = () => {
       </div>
 
       {/* Bottom Actions */}
-      <div className="mt-12 flex items-center justify-end gap-4 border-t border-[rgba(38,33,28,0.14)] pt-6">
-        <button
-          onClick={resetColors}
-          className="px-6 py-3 rounded text-xs font-bold uppercase tracking-widest text-[#534245] hover:bg-white border border-transparent hover:border-[rgba(38,33,28,0.14)] transition-all"
-        >
-          DESHACER CAMBIOS
-        </button>
-        <button
-          onClick={handleSave}
-          className="px-8 py-3 rounded text-xs font-bold uppercase tracking-widest text-white bg-[#5d172d] shadow-cta hover:opacity-90 transition-opacity flex items-center gap-2"
-        >
-          <span className="material-symbols-outlined text-base">
-            {editingPaletteId ? 'published_with_changes' : 'save'}
-          </span>
-          <span>{editingPaletteId ? 'ACTUALIZAR PALETA' : 'GUARDAR PALETA'}</span>
-        </button>
+      <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[rgba(38,33,28,0.14)] pt-6">
+        <div className="text-xs text-[#665d54]">
+          {!isValidToSave && (
+            <span className="text-rose-600 font-semibold flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-sm">error</span>
+              Hay campos requeridos o códigos HEX inválidos pendientes de corrección.
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={resetColors}
+            className="px-6 py-3 rounded text-xs font-bold uppercase tracking-widest text-[#534245] hover:bg-white border border-transparent hover:border-[rgba(38,33,28,0.14)] transition-all cursor-pointer"
+          >
+            DESHACER CAMBIOS
+          </button>
+          <button
+            onClick={handleSave}
+            className={`px-8 py-3 rounded text-xs font-bold uppercase tracking-widest text-white shadow-cta transition-all flex items-center gap-2 cursor-pointer ${
+              isValidToSave
+                ? 'bg-[#5d172d] hover:opacity-90'
+                : 'bg-gray-400 hover:bg-gray-500 cursor-not-allowed opacity-80'
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">
+              {editingPaletteId ? 'published_with_changes' : 'save'}
+            </span>
+            <span>{editingPaletteId ? 'ACTUALIZAR PALETA' : 'GUARDAR PALETA'}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

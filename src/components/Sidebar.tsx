@@ -11,6 +11,8 @@ export const Sidebar: React.FC = () => {
     { id: 'colores', label: 'Colores', icon: 'palette' },
     { id: 'tipografia', label: 'Tipografía', icon: 'text_fields' },
     { id: 'paletas', label: 'Paletas', icon: 'color_lens' },
+    { id: 'curriculum', label: 'Currículum', icon: 'contact_page' },
+    { id: 'klm', label: 'Cálculo KLM', icon: 'calculate' },
   ];
 
   const handleNavClick = (tab: NavTab) => {
