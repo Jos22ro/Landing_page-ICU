@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import {
   NavTab,
   ColorTokens,
@@ -73,6 +73,16 @@ interface BrandContextType {
   setIsAjustesOpen: (open: boolean) => void;
   toast: string | null;
   showToast: (msg: string) => void;
+  // Loading state with Tangram Loader
+  isLoading: boolean;
+  loadingLabel: string;
+  loadingSpeed?: { displayDuration?: number; transitionDuration?: number };
+  startLoading: (
+    label?: string,
+    autoCloseMs?: number,
+    options?: { displayDuration?: number; transitionDuration?: number }
+  ) => void;
+  stopLoading: () => void;
   // Curriculum state & actions
   curriculumData: CurriculumData;
   setCurriculumData: React.Dispatch<React.SetStateAction<CurriculumData>>;
@@ -245,6 +255,43 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [isNuevoEventoOpen, setIsNuevoEventoOpen] = useState(false);
   const [isAjustesOpen, setIsAjustesOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadingLabel, setLoadingLabel] = useState<string>('Cargando');
+  const [loadingSpeed, setLoadingSpeed] = useState<{ displayDuration?: number; transitionDuration?: number } | undefined>(undefined);
+  const loadingTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const startLoading = (
+    label: string = 'Cargando',
+    autoCloseMs?: number,
+    options?: { displayDuration?: number; transitionDuration?: number }
+  ) => {
+    if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
+    }
+    setLoadingLabel(label);
+    setLoadingSpeed(options);
+    setIsLoading(true);
+
+    // Default timeout to allow viewing all 3 figures (Conejo -> Gato -> Espada) if not specified or when requested
+    const effectiveTimeout = autoCloseMs !== undefined ? autoCloseMs : 6500;
+    if (effectiveTimeout > 0) {
+      const ms = effectiveTimeout < 100 ? effectiveTimeout * 1000 : effectiveTimeout;
+      loadingTimerRef.current = setTimeout(() => {
+        setIsLoading(false);
+        loadingTimerRef.current = null;
+      }, ms);
+    }
+  };
+
+  const stopLoading = () => {
+    if (loadingTimerRef.current) {
+      clearTimeout(loadingTimerRef.current);
+      loadingTimerRef.current = null;
+    }
+    setIsLoading(false);
+    setLoadingSpeed(undefined);
+  };
 
   // Sync Root CSS Variables
   useEffect(() => {
@@ -1030,6 +1077,11 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setIsAjustesOpen,
         toast,
         showToast,
+        isLoading,
+        loadingLabel,
+        loadingSpeed,
+        startLoading,
+        stopLoading,
         curriculumData,
         setCurriculumData,
         updateCurriculumField,

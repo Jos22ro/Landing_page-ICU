@@ -3,7 +3,7 @@ import { useBrand } from '../context/BrandContext';
 import { NavTab } from '../types';
 
 export const Sidebar: React.FC = () => {
-  const { activeTab, setActiveTab, user, logout, setIsNuevoEventoOpen, setIsAjustesOpen, navigate } = useBrand();
+  const { activeTab, setActiveTab, user, logout, setIsNuevoEventoOpen, setIsAjustesOpen, navigate, startLoading } = useBrand();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems: { id: NavTab; label: string; icon: string }[] = [
@@ -111,6 +111,14 @@ export const Sidebar: React.FC = () => {
           </button>
 
           <div className="space-y-1">
+            <button
+              onClick={() => startLoading('Cargando experiencia Tangram...', 7200)}
+              className="w-full flex items-center gap-3 px-4 py-2 text-[#46383b] hover:bg-[#e6e2db] rounded-lg transition-all text-sm font-medium"
+              title="Probar animación Tangram Loader completa"
+            >
+              <span className="material-symbols-outlined text-base">hourglass_top</span>
+              <span>Tangram Loader (3 Figuras)</span>
+            </button>
             <button
               onClick={() => setIsAjustesOpen(true)}
               className="w-full flex items-center gap-3 px-4 py-2 text-[#534245] hover:bg-[#e6e2db] rounded-lg transition-all text-sm font-medium"

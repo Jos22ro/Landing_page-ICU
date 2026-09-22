@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, Lock, Mail, ArrowLeft } from 'lucide-react';
 import { validateEmail } from '../utils/validation';
 
 export const LoginView: React.FC = () => {
-  const { login, navigate, colors } = useBrand();
+  const { login, navigate, colors, startLoading } = useBrand();
   const [email, setEmail] = useState('adriana@icueventos.com');
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +26,17 @@ export const LoginView: React.FC = () => {
 
     if (!emailError && !passwordError) {
       setError(null);
-      login();
+      // Display all 3 tangrams with an accelerated dynamic speed (700ms display, 500ms transition)
+      // Cycle: Conejo (700ms) -> Trans (500ms) -> Gato (700ms) -> Trans (500ms) -> Espada (700ms) = 3100ms total
+      const totalCycleMs = 3400;
+      startLoading('Autenticando credenciales...', totalCycleMs, {
+        displayDuration: 650,
+        transitionDuration: 450,
+      });
+
+      setTimeout(() => {
+        login();
+      }, totalCycleMs);
     } else {
       setError('Por favor corrige los campos señalados antes de ingresar');
     }

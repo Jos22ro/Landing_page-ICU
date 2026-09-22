@@ -13,6 +13,8 @@ export const CurriculumView: React.FC = () => {
     saveCurriculumData,
     resetCurriculumData,
     showToast,
+    startLoading,
+    stopLoading,
   } = useBrand();
 
   const [viewMode, setViewMode] = useState<CurriculumViewMode>('vista_previa');
@@ -34,6 +36,7 @@ export const CurriculumView: React.FC = () => {
 
   const handleExportPdf = async () => {
     setIsExporting(true);
+    startLoading('Generando documento PDF en formato A4...');
     const fileName = `CV_${curriculumData.firstName || 'Alejandro'}_${curriculumData.lastName || 'Torres'}.pdf`
       .replace(/\s+/g, '_');
 
@@ -44,6 +47,7 @@ export const CurriculumView: React.FC = () => {
 
     setIsExporting(false);
     setExportStatus('');
+    stopLoading();
 
     if (success) {
       showToast('¡PDF generado y descargado con éxito!');
@@ -54,6 +58,7 @@ export const CurriculumView: React.FC = () => {
 
   const handleExportPng = async () => {
     setIsExporting(true);
+    startLoading('Renderizando captura PNG en alta definición...');
     setExportStatus('Generando imagen de alta resolución...');
     const fileName = `CV_${curriculumData.firstName || 'Alejandro'}_${curriculumData.lastName || 'Torres'}.png`
       .replace(/\s+/g, '_');
@@ -61,6 +66,7 @@ export const CurriculumView: React.FC = () => {
     const success = await exportCurriculumToImage('cv-print-document', fileName);
     setIsExporting(false);
     setExportStatus('');
+    stopLoading();
 
     if (success) {
       showToast('¡Imagen PNG descargada con éxito!');

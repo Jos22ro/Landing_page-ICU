@@ -10,6 +10,7 @@ export const DashboardView: React.FC = () => {
     setIsNuevoEventoOpen,
     colors,
     navigate,
+    startLoading,
   } = useBrand();
 
   const activeEventsCount = events.length;
@@ -195,6 +196,15 @@ export const DashboardView: React.FC = () => {
                   visibility
                 </span>
                 <span className="text-sm font-medium text-[#1c1c18]">Ver Landing Pública</span>
+              </button>
+              <button
+                onClick={() => startLoading('Cargando recursos del sistema...', 7200)}
+                className="w-full flex items-center gap-4 p-3 rounded-lg border border-[rgba(38,33,28,0.14)] hover:bg-[#f7f3ec] hover:border-[#7a2e43] transition-all group text-left"
+              >
+                <span className="material-symbols-outlined text-[#5d172d] group-hover:scale-110 transition-transform">
+                  hourglass_top
+                </span>
+                <span className="text-sm font-medium text-[#1c1c18]">Probar Tangram Loader (3 Figuras)</span>
               </button>
             </div>
           </section>
