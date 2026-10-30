@@ -7,6 +7,7 @@ import { TipografiaView } from './components/TipografiaView';
 import { PaletasView } from './components/PaletasView';
 import { CurriculumView } from './components/CurriculumView';
 import { KlmView } from './components/KlmView';
+import { GaleriaView } from './components/GaleriaView';
 import { LandingPublicaView } from './components/LandingPublicaView';
 import { LoginView } from './components/LoginView';
 import { NuevoEventoModal } from './components/NuevoEventoModal';
@@ -43,6 +44,7 @@ const MainContent: React.FC = () => {
               {activeTab === 'paletas' && <PaletasView />}
               {activeTab === 'curriculum' && <CurriculumView />}
               {activeTab === 'klm' && <KlmView />}
+              {activeTab === 'galeria' && <GaleriaView />}
             </main>
             <NuevoEventoModal />
             <AjustesModal />

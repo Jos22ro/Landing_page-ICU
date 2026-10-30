@@ -13,6 +13,7 @@ export const Sidebar: React.FC = () => {
     { id: 'paletas', label: 'Paletas', icon: 'color_lens' },
     { id: 'curriculum', label: 'Currículum', icon: 'contact_page' },
     { id: 'klm', label: 'Cálculo KLM', icon: 'calculate' },
+    { id: 'galeria', label: 'Galería', icon: 'photo_library' },
   ];
 
   const handleNavClick = (tab: NavTab) => {

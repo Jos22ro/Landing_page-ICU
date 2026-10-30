@@ -1,0 +1,206 @@
+{
+  "metadata.json": {
+    "mtime": 1790979448.0880506,
+    "seen": 1792616300.9328535,
+    "ast_hash": "5bc2d877f6d1deed48bbe89ec83a30f2",
+    "semantic_hash": ""
+  },
+  "package.json": {
+    "mtime": 1791324039.0779405,
+    "seen": 1792616300.9328644,
+    "ast_hash": "5d68f73556afdbcc1b4a8b006c699e61",
+    "semantic_hash": ""
+  },
+  "src/App.tsx": {
+    "mtime": 1791324255.0779727,
+    "seen": 1792616300.9328694,
+    "ast_hash": "60446f02be3dc5d5c8bbbb909b1d1032",
+    "semantic_hash": ""
+  },
+  "src/components/AjustesModal.tsx": {
+    "mtime": 1790979448.0891798,
+    "seen": 1792616300.9328718,
+    "ast_hash": "e093207d9b97ea85049e5ac8d48af6db",
+    "semantic_hash": ""
+  },
+  "src/components/ColoresView.tsx": {
+    "mtime": 1790979448.0892878,
+    "seen": 1792616300.932874,
+    "ast_hash": "bac0735fe8a93d4575f7e38b40f84afb",
+    "semantic_hash": ""
+  },
+  "src/components/CurriculumDocument.tsx": {
+    "mtime": 1790979448.0892878,
+    "seen": 1792616300.9328759,
+    "ast_hash": "deb090a0413eeb253106c58d5be8da88",
+    "semantic_hash": ""
+  },
+  "src/components/CurriculumEditor.tsx": {
+    "mtime": 1790979448.0892878,
+    "seen": 1792616300.9328775,
+    "ast_hash": "6afa66d768beb1d4b473445d9ec60f86",
+    "semantic_hash": ""
+  },
+  "src/components/CurriculumPreviewControls.tsx": {
+    "mtime": 1790979448.0892878,
+    "seen": 1792616300.9328792,
+    "ast_hash": "7ae7df50dc91627efa2a86376342f1c0",
+    "semantic_hash": ""
+  },
+  "src/components/CurriculumView.tsx": {
+    "mtime": 1790979448.0892878,
+    "seen": 1792616300.9328806,
+    "ast_hash": "8c82c4b3df5e572e673ea28e76cc59cc",
+    "semantic_hash": ""
+  },
+  "src/components/DashboardView.tsx": {
+    "mtime": 1790979448.0892878,
+    "seen": 1792616300.9328818,
+    "ast_hash": "597f3a479045368b47e9ce8589fe9e8d",
+    "semantic_hash": ""
+  },
+  "src/components/GaleriaView.tsx": {
+    "mtime": 1791324194.6566935,
+    "seen": 1792616300.9328833,
+    "ast_hash": "918708eab6b165baa747f88154c1d8a7",
+    "semantic_hash": ""
+  },
+  "src/components/KlmView.tsx": {
+    "mtime": 1790979448.0892878,
+    "seen": 1792616300.932885,
+    "ast_hash": "0c041db71092ce87b80074d7b3445130",
+    "semantic_hash": ""
+  },
+  "src/components/LandingPublicaView.tsx": {
+    "mtime": 1792615795.7970028,
+    "seen": 1792616300.9328868,
+    "ast_hash": "a9714412d8bdc5c12a27383f0b1801a2",
+    "semantic_hash": ""
+  },
+  "src/components/LoginView.tsx": {
+    "mtime": 1790979448.0899916,
+    "seen": 1792616300.9328878,
+    "ast_hash": "60337b0a75901e83cf6d1223f0826815",
+    "semantic_hash": ""
+  },
+  "src/components/NotificationToast.tsx": {
+    "mtime": 1790979448.0899916,
+    "seen": 1792616300.9328897,
+    "ast_hash": "6de7b8cd481694c4d41c678645a623e1",
+    "semantic_hash": ""
+  },
+  "src/components/NuevoEventoModal.tsx": {
+    "mtime": 1790979448.0899916,
+    "seen": 1792616300.932891,
+    "ast_hash": "88d9bead70b2817d635b2b32787fffcd",
+    "semantic_hash": ""
+  },
+  "src/components/PaletasView.tsx": {
+    "mtime": 1790979448.0899916,
+    "seen": 1792616300.9328926,
+    "ast_hash": "6c0649d3c4c79e15953f15c6b58a6a07",
+    "semantic_hash": ""
+  },
+  "src/components/ShowreelPlayer.tsx": {
+    "mtime": 1792616129.1759999,
+    "seen": 1792616300.932894,
+    "ast_hash": "1e59dc2a6f58949d786ba7d12581063e",
+    "semantic_hash": ""
+  },
+  "src/components/Sidebar.tsx": {
+    "mtime": 1791324217.5566912,
+    "seen": 1792616300.9328954,
+    "ast_hash": "47f21772c96f53dd229b0d151444896f",
+    "semantic_hash": ""
+  },
+  "src/components/TangramLoader.tsx": {
+    "mtime": 1790979448.0899916,
+    "seen": 1792616300.9328969,
+    "ast_hash": "e4d5d80436146981822491e672eddb2a",
+    "semantic_hash": ""
+  },
+  "src/components/TipografiaView.tsx": {
+    "mtime": 1790979448.0899916,
+    "seen": 1792616300.9328983,
+    "ast_hash": "6668e67d8c49ee3b87900515ce93073a",
+    "semantic_hash": ""
+  },
+  "src/context/BrandContext.tsx": {
+    "mtime": 1791324120.5523632,
+    "seen": 1792616300.9328995,
+    "ast_hash": "7ae2f273570780c47ee70ef23365b534",
+    "semantic_hash": ""
+  },
+  "src/data/mockData.ts": {
+    "mtime": 1790979448.0909915,
+    "seen": 1792616300.9329014,
+    "ast_hash": "f3bcac96d605e2ff96b619e0c4acae0e",
+    "semantic_hash": ""
+  },
+  "src/main.tsx": {
+    "mtime": 1790979448.0909915,
+    "seen": 1792616300.9329026,
+    "ast_hash": "2b36426d5ad7e08ef79746aa524f4fb7",
+    "semantic_hash": ""
+  },
+  "src/types.ts": {
+    "mtime": 1791324066.0978873,
+    "seen": 1792616300.9329042,
+    "ast_hash": "bf2193f7dae75a5360dcfb3c1d1d706c",
+    "semantic_hash": ""
+  },
+  "src/utils/klmCalculator.ts": {
+    "mtime": 1790979448.0909915,
+    "seen": 1792616300.9329054,
+    "ast_hash": "37f98c5a3a70e5e45b24d7b0f8b23294",
+    "semantic_hash": ""
+  },
+  "src/utils/pdfExport.ts": {
+    "mtime": 1790979448.092637,
+    "seen": 1792616300.932907,
+    "ast_hash": "954bbece4791c15c58e1b10f5f691af4",
+    "semantic_hash": ""
+  },
+  "src/utils/validation.ts": {
+    "mtime": 1790979448.092637,
+    "seen": 1792616300.932908,
+    "ast_hash": "b77fae4b8645d8a25bca8e4d2a9590a3",
+    "semantic_hash": ""
+  },
+  "tsconfig.json": {
+    "mtime": 1790979448.092637,
+    "seen": 1792616300.9329093,
+    "ast_hash": "8827451c4e35790dd3f3538c265e7d15",
+    "semantic_hash": ""
+  },
+  "vite.config.ts": {
+    "mtime": 1790979448.092637,
+    "seen": 1792616300.932911,
+    "ast_hash": "9c319043c25764dfe83b687f74637c6c",
+    "semantic_hash": ""
+  },
+  "index.html": {
+    "mtime": 1790979448.0880506,
+    "seen": 1792616300.932912,
+    "ast_hash": "560d179a3301156faac9d2fa537f4c34",
+    "semantic_hash": ""
+  },
+  "pnpm-workspace.yaml": {
+    "mtime": 1790979988.1822262,
+    "seen": 1792616300.9329133,
+    "ast_hash": "0e4323e9ffbbf75949861d2fa56c5204",
+    "semantic_hash": ""
+  },
+  "public/videos/showreel-poster.jpg": {
+    "mtime": 1792615715.0662038,
+    "seen": 1792616300.932915,
+    "ast_hash": "7117d00271a6a7229cb20a708d991ca1",
+    "semantic_hash": ""
+  },
+  "public/videos/showreel-360.mp4": {
+    "mtime": 1792615714.7112048,
+    "seen": 1792616300.9329162,
+    "ast_hash": "5cad40ee28d0bfa56437953771ca126b",
+    "semantic_hash": ""
+  }
+}

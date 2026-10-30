@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useBrand } from '../context/BrandContext';
+import { ShowreelPlayer } from './ShowreelPlayer';
 import { validateEmail, validateNotEmpty, validatePeriod, validateMinLength } from '../utils/validation';
 
 export const LandingPublicaView: React.FC = () => {
-  const { colors, typography, showToast, navigate, themeMode, toggleThemeMode } = useBrand();
+  const { colors, typography, showToast, navigate, themeMode, toggleThemeMode, galleryImages } = useBrand();
 
   // SISTEMA ESTRICTO DE 5 ESCALAS TIPOGRÁFICAS (MÁXIMO 5 ESCALAS)
   // Escala 1: Titular Principal Hero (H1 / Display)
@@ -56,53 +57,21 @@ export const LandingPublicaView: React.FC = () => {
     nombreError || emailError || fechaDesdeError || fechaHastaError || periodError || mensajeError
   );
 
+  /* ── ★GALERÍA PÚBLICA — ESTADO★ ───────────────────────────────────────
+     selectedGalleryTab: pestaña activa de la sección "Momentos ICU"
+       (todos | galas | lanzamientos | corporativo). Filtra el grid de abajo.
+     lightboxImg: URL de la imagen abierta en el visor grande (modal).
+       null = cerrado. Al hacer click en una imagen del grid se setea.
+     ── DE DÓNDE SALEN LAS IMÁGENES ──
+     galleryImages viene del contexto global (src/context/BrandContext.tsx,
+     línea ~166): se lee del localStorage con la clave 'icu_gallery_images'.
+     Se carga/agrega/borra desde la vista ADMIN (Sidebar → tab "Galería",
+     archivo src/components/GaleriaView.tsx). IMPORTANTE para la prueba:
+     si el localStorage está vacío la galería pública se ve VACÍA
+     (no hay imágenes precargadas). Agregá imágenes desde la vista admin
+     y van a aparecer acá al instante.                                     */
   const [selectedGalleryTab, setSelectedGalleryTab] = useState('todos');
   const [lightboxImg, setLightboxImg] = useState<string | null>(null);
-
-  const galleryImages = [
-    {
-      id: 1,
-      category: 'galas',
-      title: "Gala Benéfica 'Aura'",
-      location: 'Palacio de Velázquez',
-      url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 2,
-      category: 'lanzamientos',
-      title: 'Lanzamiento Colección PV25',
-      location: 'Galería de Arte Vanguardia',
-      url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 3,
-      category: 'corporativo',
-      title: 'Cumbre Tech Latam',
-      location: 'Centro de Convenciones',
-      url: 'https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 4,
-      category: 'galas',
-      title: 'Noche de Premios Elipsis',
-      location: 'Teatro Real',
-      url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 5,
-      category: 'lanzamientos',
-      title: 'Showroom Automotriz Luxury',
-      location: 'Pavillion One',
-      url: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=80',
-    },
-    {
-      id: 6,
-      category: 'corporativo',
-      title: 'Foro Internacional de Innovación',
-      location: 'Hotel Grand Hyatt',
-      url: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=80',
-    },
-  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,6 +108,12 @@ export const LandingPublicaView: React.FC = () => {
     });
   };
 
+  // ── ★FILTRO DE LA GALERÍA★: "todos" muestra galleryImages completo;
+  // cualquier otra pestaña filtra por img.category (los categories son
+  // 'galas' | 'lanzamientos' | 'corporativo', definidos en src/types.ts
+  // y en el <select> del admin GaleriaView.tsx). Si piden agregar una
+  // categoría nueva hay que tocar los 3 lugares mencionados + el array
+  // de tabs de la línea ~620 de este archivo.
   const filteredGallery =
     selectedGalleryTab === 'todos'
       ? galleryImages
@@ -300,6 +275,92 @@ export const LandingPublicaView: React.FC = () => {
           </a>
         </div>
       </header>
+
+      {/* ★VIDEO: aquí se monta el reproductor custom★
+          Componente completo en src/components/ShowreelPlayer.tsx (ver su
+          banner del encabezado). Los props src/poster apuntan a los archivos
+          en /public/videos/. Para cambiar el video de la prueba: cambiar
+          estos 2 archivos (ideal 16:9 y mp4 con audio AAC). */}
+      {/* Video Section */}
+      <ShowreelPlayer src="/videos/showreel-360.mp4" poster="/videos/showreel-poster.jpg" />
+
+      {/* ╔═ ★GALERÍA — CARRUSEL "Momentos Destacados" (scroll horizontal)═╗
+          ║ NO ES un carrusel de librería: es un contenedor con overflow-x-auto ║
+          ║ + scroll suave por snap (snap-x snap-mandatory) → se desliza con el ║
+          ║ mouse/dedo o rueda del mouse horizontal.                            ║
+          ║ ⚠ AVISO (pregunta típica de la prueba):                             ║
+          ║   • Las flechas ← → (botones de abajo) NO tienen onClick: son       ║
+          ║     DECORATIVAS. Si piden que funcionen: darles un ref al                           ║
+          ║     contenedor y hacer ref.current.scrollBy({ left: ±320, ... })    ║
+          ║   • Los puntos (dots) de abajo también son decorativos (el 1º       ║
+          ║     está "activo" pintado fijo). Para que sigan el scroll hacen     ║
+          ║     falta un listener de scroll que calcule el índice visible.      ║
+          ╚═════════════════════════════════════════════════════════════════════╝ */}
+      {/* Photo Carousel Section */}
+      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center space-y-3 mb-10">
+          <span
+            className="font-sans uppercase tracking-widest opacity-75 block font-semibold"
+            style={{ color: colors.accent, fontSize: `${smallSize}px` }}
+          >
+            Galería
+          </span>
+          <h2 className="font-bold font-serif" style={{ fontSize: `${h2Size}px`, color: colors.textMain }}>
+            Momentos Destacados
+          </h2>
+        </div>
+
+        <div className="relative">
+          {/* Carousel Container */}
+          <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory">
+            {galleryImages.map((img) => (
+              <div
+                key={img.id}
+                className="flex-shrink-0 w-72 h-48 rounded-xl overflow-hidden snap-center shadow-1 border"
+                style={{ borderColor: colors.neutral }}
+              >
+                <img
+                  src={img.url}
+                  alt={img.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+
+          {/* Carousel Navigation Arrows */}
+          <button
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-10 h-10 rounded-full flex items-center justify-center shadow-1 border cursor-pointer hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: colors.surface, borderColor: colors.neutral }}
+          >
+            <span className="material-symbols-outlined" style={{ color: colors.textMain, fontSize: '20px' }}>
+              chevron_left
+            </span>
+          </button>
+          <button
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-10 h-10 rounded-full flex items-center justify-center shadow-1 border cursor-pointer hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: colors.surface, borderColor: colors.neutral }}
+          >
+            <span className="material-symbols-outlined" style={{ color: colors.textMain, fontSize: '20px' }}>
+              chevron_right
+            </span>
+          </button>
+        </div>
+
+        {/* Carousel Dots */}
+        <div className="flex justify-center gap-2 mt-6">
+          {[0, 1, 2, 3, 4, 5].map((dot) => (
+            <div
+              key={dot}
+              className="w-2 h-2 rounded-full transition-all"
+              style={{
+                backgroundColor: dot === 0 ? colors.accent : colors.neutral,
+                width: dot === 0 ? '24px' : '8px',
+              }}
+            />
+          ))}
+        </div>
+      </section>
 
       {/* Value Proposition */}
       <section
@@ -511,6 +572,16 @@ export const LandingPublicaView: React.FC = () => {
         </div>
       </section>
 
+      {/* ╔═ ★GALERÍA — GRID "Momentos ICU" (la sección principal) ★═══════╗
+          ║ 1. Tabs de filtro (todos/galas/lanzamientos/corporativo) →         ║
+          ║    setean selectedGalleryTab y filtran filteredGallery.            ║
+          ║ 2. Grid responsive: 1 col móvil / 2 tablet / 3 desktop.            ║
+          ║ 3. Click en una imagen → setLightboxImg(img.url) abre el visor.    ║
+          ║ La imagen y su sombreado inferior (gradiente) vienen con           ║
+          ║ título + categoría + ubicación pintados encima.                    ║
+          ║ Si piden "fondo o altura distinta de la celda": es la clase        ║
+          ║ h-80 del div con group (línea ~640).                              ║
+          ╚════════════════════════════════════════════════════════════════════╝ */}
       {/* Gallery Section */}
       <section
         id="galeria"
@@ -603,6 +674,14 @@ export const LandingPublicaView: React.FC = () => {
         </div>
       </section>
 
+      {/* ╔═ ★GALERÍA — LIGHTBOX (visor a pantalla grande) ★═══════════════╗
+          ║ Se abre al hacer click en una imagen del grid de arriba             ║
+          ║ (lightboxImg no es null → se muestra este modal).                   ║
+          ║ CÓMO SE CIERRA hoy: click en el fondo negro o en la X.              ║
+          ║ ⚠ AVISO de prueba: NO tiene flechas de navegación (anterior /       ║
+          ║ siguiente) ni botón Esc. Si piden navegación: guardar el índice     ║
+          ║ de la imagen en vez de solo la URL y mover ese índice ±1.           ║
+          ╚═════════════════════════════════════════════════════════════════════╝ */}
       {/* Lightbox Modal */}
       {lightboxImg && (
         <div

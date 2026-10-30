@@ -15,6 +15,7 @@ import {
   LanguageItem,
   SoftwareCompetencyItem,
   SoftSkillItem,
+  GalleryImage,
 } from '../types';
 import {
   defaultColors,
@@ -104,6 +105,11 @@ interface BrandContextType {
   addSkill: (skill?: Partial<SoftSkillItem>) => void;
   updateSkill: (id: string, updated: Partial<SoftSkillItem>) => void;
   deleteSkill: (id: string) => void;
+  // Gallery state & actions
+  galleryImages: GalleryImage[];
+  addGalleryImage: (image: Omit<GalleryImage, 'id'>) => void;
+  updateGalleryImage: (id: string, updated: Partial<GalleryImage>) => void;
+  deleteGalleryImage: (id: string) => void;
 }
 
 const BrandContext = createContext<BrandContextType | undefined>(undefined);
@@ -155,6 +161,16 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [curriculumData, setCurriculumData] = useState<CurriculumData>(() => {
     const saved = localStorage.getItem('icu_curriculum_data');
     return saved ? JSON.parse(saved) : defaultCurriculumData;
+  });
+
+  // ★GALERÍA★ Fuente de verdad de las imágenes: se lee del localStorage
+  // ('icu_gallery_images'). Empieza VACÍA si no hay nada guardado (por eso
+  // la landing se ve sin fotos en un navegador nuevo). addGalleryImage /
+  // updateGalleryImage / deleteGalleryImage (más abajo, ~ línea 1029)
+  // escriben aquí y persisten el JSON en la misma clave.
+  const [galleryImages, setGalleryImages] = useState<GalleryImage[]>(() => {
+    const saved = localStorage.getItem('icu_gallery_images');
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [palettes, setPalettes] = useState<PaletteItem[]>(() => {
@@ -1014,6 +1030,41 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     });
   };
 
+  // Gallery functions
+  // ★GALERÍA — ALTA★: agrega la imagen al array y reescribe TODO el array
+  // en localStorage (es como "la base de datos" del proyecto de prueba).
+  const addGalleryImage = (image: Omit<GalleryImage, 'id'>) => {
+    const newImage: GalleryImage = {
+      id: Date.now().toString(),
+      ...image,
+    };
+    setGalleryImages((prev) => {
+      const updated = [newImage, ...prev];
+      localStorage.setItem('icu_gallery_images', JSON.stringify(updated));
+      return updated;
+    });
+    showToast(`Imagen '${image.title}' agregada a la galería`);
+    addActivity('photo_library', `Nueva imagen '${image.title}' agregada a la galería`, userProfile.name);
+  };
+
+  const updateGalleryImage = (id: string, updated: Partial<GalleryImage>) => {
+    setGalleryImages((prev) => {
+      const updatedList = prev.map((item) => (item.id === id ? { ...item, ...updated } : item));
+      localStorage.setItem('icu_gallery_images', JSON.stringify(updatedList));
+      return updatedList;
+    });
+    showToast('Imagen actualizada');
+  };
+
+  const deleteGalleryImage = (id: string) => {
+    setGalleryImages((prev) => {
+      const updatedList = prev.filter((item) => item.id !== id);
+      localStorage.setItem('icu_gallery_images', JSON.stringify(updatedList));
+      return updatedList;
+    });
+    showToast('Imagen eliminada de la galería');
+  };
+
   const login = () => {
     setIsLoggedIn(true);
     localStorage.setItem('icu_logged_in', 'true');
@@ -1102,6 +1153,10 @@ export const BrandProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         addSkill,
         updateSkill,
         deleteSkill,
+        galleryImages,
+        addGalleryImage,
+        updateGalleryImage,
+        deleteGalleryImage,
       }}
     >
       {children}

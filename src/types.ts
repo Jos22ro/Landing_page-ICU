@@ -1,4 +1,4 @@
-export type NavTab = 'dashboard' | 'colores' | 'tipografia' | 'paletas' | 'curriculum' | 'klm' | 'landing' | 'login' | 'ajustes';
+export type NavTab = 'dashboard' | 'colores' | 'tipografia' | 'paletas' | 'curriculum' | 'klm' | 'galeria' | 'landing' | 'login' | 'ajustes';
 
 export interface EventItem {
   id: string;
@@ -116,4 +116,12 @@ export interface CurriculumData {
   languages: LanguageItem[];
   competencies: SoftwareCompetencyItem[];
   skills: SoftSkillItem[];
+}
+
+export interface GalleryImage {
+  id: string;
+  category: 'galas' | 'lanzamientos' | 'corporativo';
+  title: string;
+  location: string;
+  url: string;
 }

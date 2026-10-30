@@ -72,6 +72,57 @@ input[type="range"]:focus {
   outline: none;
 }
 
+/* Reproductor de video (showreel) */
+input[type="range"].video-range {
+  height: 16px;
+  cursor: pointer;
+}
+
+input[type="range"].video-range::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+  border-radius: 999px;
+}
+
+input[type="range"].video-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 12px;
+  width: 12px;
+  margin-top: -3px;
+  border: none;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+  transition: transform 0.15s ease;
+}
+
+input[type="range"].video-range:hover::-webkit-slider-thumb,
+input[type="range"].video-range:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.25);
+}
+
+input[type="range"].video-range::-moz-range-track {
+  height: 6px;
+  background: transparent;
+  border-radius: 999px;
+}
+
+input[type="range"].video-range::-moz-range-thumb {
+  height: 12px;
+  width: 12px;
+  border: none;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+input[type="range"].video-range:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
